@@ -1,0 +1,65 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int    @id @default(autoincrement())
+  name          String
+  age           Int
+  email         String @unique
+  // isAdmin       String?
+  isAdmin       Role   @default(BASIC)
+  preferences   Json?
+  blob          Bytes?
+  // posts        Post[]
+  favoritePosts Post[] @relation("favoritePosts")
+  writtenPosts  Post[] @relation("writtenPosts")
+  // blob Unsupported("")
+
+  userPreference   UserPreference? @relation(fields: [userPreferenceId], references: [id])
+  userPreferenceId String? @unique
+
+  @@unique([name, age])
+  @@index([email])
+}
+
+model Post {
+  id            String     @id @default(uuid())
+  title         String
+  averageRating Float
+  createdAt     DateTime   @default(now())
+  updatetedAt   DateTime   @updatedAt
+  // user        User     @relation(fields: [authorId], references: [id])
+  // authorId      Int
+  author        User       @relation("writtenPosts", fields: [authorId], references: [id])
+  authorId      Int
+  favoritedBy   User?      @relation("favoritePosts", fields: [favoritedById], references: [id])
+  favoritedById Int?
+  categories    Category[]
+  // @@id([authorId,title])
+}
+
+model Category {
+  id    String @id @default(uuid())
+  name  String @unique
+  posts Post[]
+}
+
+model UserPreference {
+  id           String  @id @default(uuid())
+  emailUpdates Boolean
+  user User?
+}
+
+enum Role {
+  ADMIN
+  BASIC
+}
